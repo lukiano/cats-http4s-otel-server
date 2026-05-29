@@ -2,7 +2,7 @@ package org.lucho
 
 import com.comcast.ip4s.{ Host, Port }
 
-import cats.effect.std.Console
+import cats.effect.std.{ Console, Env }
 import cats.effect.kernel.{ Async, Resource }
 
 import fs2.io.net.Network
@@ -15,8 +15,9 @@ import org.typelevel.otel4s.metrics.Meter
 import org.typelevel.otel4s.trace.Tracer
 
 object Server {
-  def server[F[_]: Async: Meter: Tracer: Network: Console](host: Host, port: Port): Resource[F, Http4sServer] =
-    EmberServerBuilder.default[F]
+
+  def server[F[_]: Async: Console: Env: Meter: Network: Tracer](host: Host, port: Port): Resource[F, Http4sServer] =
+    EmberServerBuilder.default
       .withHost(host)
       .withPort(port)
       .withHttpApp(Routes.routes().orNotFound)

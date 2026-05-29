@@ -44,6 +44,9 @@ libraryDependencies += "io.circe" %% "circe-generic" % circeVersion
 // Optional for string interpolation to JSON model
 libraryDependencies += "io.circe" %% "circe-literal" % circeVersion
 
+// Parser
+libraryDependencies += "io.circe" %% "circe-parser" % circeVersion
+
 // HTTP Client
 libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.23"
 

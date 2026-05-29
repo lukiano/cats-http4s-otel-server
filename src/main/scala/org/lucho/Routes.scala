@@ -1,6 +1,8 @@
 package org.lucho
 
-import cats.effect.std.Console
+import cats.MonadThrow
+
+import cats.effect.std.{ Console, Env }
 import cats.effect.kernel.Temporal
 
 import io.circe.syntax._
@@ -18,19 +20,24 @@ import org.http4s.circe._
 import org.typelevel.otel4s.metrics.Meter
 import org.typelevel.otel4s.trace.Tracer
 
+import cats.Functor
+
 object Routes {
   
-    def routeClassifier[F[_]]: RouteClassifier = {
+    def routeClassifier[F[_]: Env: MonadThrow]: F[RouteClassifier] = {
         val http4sDsl = Http4sDsl[F]
         import http4sDsl._
+        import cats.syntax.functor._
 
-        RouteClassifier.of[F] {
-            case GET -> Root / "hello" =>
+        for {
+            routeName <- retrieveConfigValue("hello")
+        } yield RouteClassifier.of {
+            case GET -> Root / routeName =>
                 "/hello"
-        }
+        }        
     }
 
-    def routes[F[_]: Temporal: Meter: Tracer: Network: Console](): HttpRoutes[F] = {
+    def routes[F[_]: Console: Env: Meter: Network: Temporal: Tracer](): HttpRoutes[F] = {
         val http4sDsl = Http4sDsl[F]
         import http4sDsl._
         import cats.Monad.ops._

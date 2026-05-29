@@ -4,9 +4,9 @@ import cats.effect.{ LiftIO, IO, IOApp }
 
 import cats.effect.kernel.{ Async, Resource }
 
-import cats.effect.std.Console
+import cats.effect.std.{ Console, Env }
 
-import com.comcast.ip4s.{host, port}
+import com.comcast.ip4s.{ host, port }
 
 import fs2.io.net.Network
 
@@ -21,19 +21,17 @@ import org.typelevel.otel4s.oteljava.context.{ Context, IOLocalContextStorage }
 
 object Main extends IOApp.Simple {
 
-    def build[F[_]: Async: Network: Console: LiftIO] = {
+    def build[F[_]: Async: Console: Env: LiftIO: Network] =
       // given LocalProvider[F, Context] = IOLocalContextStorage.localProvider[F]
       for {
-          otel4s <- OtelJava.autoConfigured[F]()
+          otel4s <- OtelJava.autoConfigured()
           given MeterProvider[F] = otel4s.meterProvider
-          _ <- IORuntimeMetrics.register[F](runtime.metrics, IORuntimeMetrics.Config.default)
+          _ <- IORuntimeMetrics.register(runtime.metrics, IORuntimeMetrics.Config.default)
           given Meter[F] <- Resource.eval(otel4s.meterProvider.get("cats-http4s-otel-server"))
           given Tracer[F] <- Resource.eval(otel4s.tracerProvider.get("cats-http4s-otel-server"))
-          server <- Server.server[F](host"localhost", port"8080")
+          server <- Server.server(host"localhost", port"8080")
 
       } yield server
-    }
 
     override def run: IO[Unit] = build[IO].useForever
 }
-
