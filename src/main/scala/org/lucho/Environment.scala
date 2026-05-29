@@ -1,6 +1,6 @@
 package org.lucho
 
-import cats.MonadThrow
+import cats.{ Functor, MonadThrow }
 
 import cats.effect.std.Env
 
@@ -10,12 +10,13 @@ import io.circe.parser.decode
 
 type Config = Map[String, String]
 
-private def retrieveEnvironmentConfig[F[_]: Env as e: MonadThrow]: F[Config] =
+val environmentKey = "lucho"
+
+private def retrieveEnvironmentConfig[F[_]: Env: Functor]: F[Config] =
     for {
-        maybeJsonString <- e.get("lucho")
-        jsonString <- maybeJsonString.liftTo(new RuntimeException("Environment variable 'lucho' not found"))
-        result = decode[Map[String, String]](jsonString)
-        environmentMap <- result.liftTo[F]
+        maybeJsonString <- Env[F].get(environmentKey)
+        result = decode[Map[String, String]](maybeJsonString.getOrElse("{}"))
+        environmentMap = result.getOrElse(Map())
     } yield environmentMap
 
 
