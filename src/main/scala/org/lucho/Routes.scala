@@ -24,10 +24,11 @@ import cats.Functor
 
 object Routes {
   
-    def routeClassifier[F[_]: Env: MonadThrow]: F[RouteClassifier] = {
+    def routeClassifier[F[_]: ConfigProvider: MonadThrow]: F[RouteClassifier] = {
         val http4sDsl = Http4sDsl[F]
         import http4sDsl._
-        import cats.syntax.functor._
+        import cats.syntax.all._
+
 
         for {
             routeName <- retrieveConfigValue("hello")
